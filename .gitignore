@@ -1,0 +1,17 @@
+dist
+dist-newstyle
+.ghc.environment.*
+cabal.project.local
+
+# Profiler outputs and formatted reports:
+*.prof
+*.hp
+*.aux
+*.ps
+
+.hspec
+.hspec-failures
+
+# Code coverage:
+.hpc
+*.tix
