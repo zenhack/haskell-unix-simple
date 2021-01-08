@@ -1,1 +1,1 @@
-TODO: write README
+A straightforward wrapping of unix APIs for Haskell.
