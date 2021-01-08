@@ -2,6 +2,7 @@ module Unix
     ( preadBuf, preadBufExn
     , pread
     , pwriteBuf, pwriteBufExn
+    , pwrite
     , readBuf, readBufExn
     , writeBuf, writeBufExn
     -- , read, readExn
@@ -39,6 +40,12 @@ preadBufExn fd ptr sz off =
 pwriteBuf :: Fd -> Ptr Word8 -> CSize -> COff -> EIO CSsize
 pwriteBuf fd ptr sz off =
     orErrno $ c_pwrite fd ptr sz off
+
+pwrite :: Fd -> BS.ByteString -> COff -> EIO CSsize
+pwrite fd bs off =
+    let (fptr, foff, len) = BS.toForeignPtr bs in
+    withForeignPtr fptr $ \ptr ->
+        pwriteBuf fd (plusPtr ptr foff) (fromIntegral len) off
 
 pwriteBufExn :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
 pwriteBufExn fd ptr sz off =
