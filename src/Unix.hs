@@ -1,5 +1,6 @@
 module Unix
-    ( preadBuf, preadBufExn
+    ( ftruncate, ftruncateExn
+    , preadBuf, preadBufExn
     , pread, preadExn
     , pwriteBuf, pwriteBufExn
     , pwrite, pwriteExn
@@ -20,6 +21,13 @@ import Zhp
 import qualified Data.ByteString.Internal as BS
 
 type EIO a = IO (Either Errno a)
+
+ftruncate :: Fd -> COff -> EIO ()
+ftruncate fd off = orErrno $ void $ c_ftruncate fd off
+
+ftruncateExn :: Fd -> COff -> IO ()
+ftruncateExn fd off =
+    throwIfErrno $ ftruncate fd off
 
 preadBuf :: Fd -> Ptr Word8 -> CSize -> COff -> EIO CSsize
 preadBuf fd ptr sz off =
