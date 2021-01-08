@@ -5,7 +5,7 @@ module Unix
     , pwrite, pwriteExn
     , readBuf, readBufExn
     , writeBuf, writeBufExn
-    -- , read, readExn
+    , read, readExn
     , write, writeExn
     ) where
 
