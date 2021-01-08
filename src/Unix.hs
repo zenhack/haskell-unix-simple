@@ -1,5 +1,6 @@
 module Unix
     ( preadBuf, preadBufExn
+    , pread
     , pwriteBuf, pwriteBufExn
     , readBuf, readBufExn
     , writeBuf, writeBufExn
@@ -21,6 +22,14 @@ type EIO a = IO (Either Errno a)
 preadBuf :: Fd -> Ptr Word8 -> CSize -> COff -> EIO CSsize
 preadBuf fd ptr sz off =
     orErrno $ c_pread fd ptr sz off
+
+pread :: Fd -> CSize -> COff -> EIO BS.ByteString
+pread fd sz off = do
+    fptr <- mallocForeignPtrBytes (fromIntegral sz)
+    r <- withForeignPtr fptr $ \ptr -> preadBuf fd ptr sz off
+    pure $! case r of
+        Left e  -> Left e
+        Right v -> Right (BS.BS fptr (fromIntegral v))
 
 preadBufExn :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
 preadBufExn fd ptr sz off =
