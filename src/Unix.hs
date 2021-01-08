@@ -1,8 +1,8 @@
 module Unix
     ( preadBuf, preadBufExn
-    , pread
+    , pread, preadExn
     , pwriteBuf, pwriteBufExn
-    , pwrite
+    , pwrite, pwriteExn
     , readBuf, readBufExn
     , writeBuf, writeBufExn
     -- , read, readExn
@@ -25,6 +25,10 @@ preadBuf :: Fd -> Ptr Word8 -> CSize -> COff -> EIO CSsize
 preadBuf fd ptr sz off =
     orErrno $ c_pread fd ptr sz off
 
+preadBufExn :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
+preadBufExn fd ptr sz off =
+    throwIfErrno $ preadBuf fd ptr sz off
+
 pread :: Fd -> CSize -> COff -> EIO BS.ByteString
 pread fd sz off = do
     fptr <- mallocForeignPtrBytes (fromIntegral sz)
@@ -33,9 +37,8 @@ pread fd sz off = do
         Left e  -> Left e
         Right v -> Right (BS.fromForeignPtr fptr 0 (fromIntegral v))
 
-preadBufExn :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
-preadBufExn fd ptr sz off =
-    throwIfErrno $ preadBuf fd ptr sz off
+preadExn :: Fd -> CSize -> COff -> IO BS.ByteString
+preadExn fd sz off = throwIfErrno $ pread fd sz off
 
 pwriteBuf :: Fd -> Ptr Word8 -> CSize -> COff -> EIO CSsize
 pwriteBuf fd ptr sz off =
@@ -46,6 +49,9 @@ pwrite fd bs off =
     let (fptr, foff, len) = BS.toForeignPtr bs in
     withForeignPtr fptr $ \ptr ->
         pwriteBuf fd (plusPtr ptr foff) (fromIntegral len) off
+
+pwriteExn :: Fd -> BS.ByteString -> COff -> IO CSsize
+pwriteExn fd bs off = throwIfErrno $ pwrite fd bs off
 
 pwriteBufExn :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
 pwriteBufExn fd ptr sz off =
