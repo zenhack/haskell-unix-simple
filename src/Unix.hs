@@ -10,6 +10,7 @@ module Unix
 
 import Foreign.C.Error
 import Foreign.ForeignPtr
+import Foreign.Ptr        (plusPtr)
 import Unix.C
 import Unix.C.Errors
 import Unix.Errors
@@ -29,7 +30,7 @@ pread fd sz off = do
     r <- withForeignPtr fptr $ \ptr -> preadBuf fd ptr sz off
     pure $! case r of
         Left e  -> Left e
-        Right v -> Right (BS.BS fptr (fromIntegral v))
+        Right v -> Right (BS.fromForeignPtr fptr 0 (fromIntegral v))
 
 preadBufExn :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
 preadBufExn fd ptr sz off =
@@ -60,7 +61,7 @@ read fd sz = do
     -- possibly relative to the size of the buffer?
     pure $! case r of
         Left e  -> Left e
-        Right v -> Right (BS.BS fptr (fromIntegral v))
+        Right v -> Right (BS.fromForeignPtr fptr 0 (fromIntegral v))
 
 readExn :: Fd -> Int -> IO BS.ByteString
 readExn fd sz =
@@ -75,8 +76,10 @@ writeBufExn fd ptr sz =
     throwIfErrno $ writeBuf fd ptr sz
 
 write :: Fd -> BS.ByteString -> EIO CSsize
-write fd (BS.BS fptr sz) = withForeignPtr fptr $ \ptr ->
-    writeBuf fd ptr (fromIntegral sz)
+write fd bs =
+    let (fptr, off, len) = BS.toForeignPtr bs in
+    withForeignPtr fptr $ \ptr ->
+        writeBuf fd (plusPtr ptr off) (fromIntegral len)
 
 writeExn :: Fd -> BS.ByteString -> IO CSsize
 writeExn fd bs =
