@@ -1,5 +1,7 @@
 module Unix
-    ( ftruncate, ftruncateExn
+    ( fsync, fsyncExn
+    , fdatasync, fdatasyncExn
+    , ftruncate, ftruncateExn
     , preadBuf, preadBufExn
     , pread, preadExn
     , pwriteBuf, pwriteBufExn
@@ -21,6 +23,18 @@ import Zhp
 import qualified Data.ByteString.Internal as BS
 
 type EIO a = IO (Either Errno a)
+
+fsync :: Fd -> EIO ()
+fsync fd = orErrno $ void $ c_fsync fd
+
+fsyncExn :: Fd -> IO ()
+fsyncExn fd = throwIfErrno $ fsync fd
+
+fdatasync :: Fd -> EIO ()
+fdatasync fd = orErrno $ void $ c_fdatasync fd
+
+fdatasyncExn :: Fd -> IO ()
+fdatasyncExn fd = throwIfErrno $ fdatasync fd
 
 ftruncate :: Fd -> COff -> EIO ()
 ftruncate fd off = orErrno $ void $ c_ftruncate fd off
