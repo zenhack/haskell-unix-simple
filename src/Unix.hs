@@ -6,10 +6,12 @@ module Unix
     , pread, preadExn
     , pwriteBuf, pwriteBufExn
     , pwrite, pwriteExn
+    , pwriteFull, pwriteFullExn
     , readBuf, readBufExn
     , writeBuf, writeBufExn
     , read, readExn
     , write, writeExn
+    , writeFull, writeFullExn
     ) where
 
 import Foreign.C.Error
@@ -20,6 +22,7 @@ import Unix.C.Errors
 import Unix.Errors
 import Zhp
 
+import qualified Data.ByteString          as BS
 import qualified Data.ByteString.Internal as BS
 
 type EIO a = IO (Either Errno a)
@@ -66,6 +69,10 @@ pwriteBuf :: Fd -> Ptr Word8 -> CSize -> COff -> EIO CSsize
 pwriteBuf fd ptr sz off =
     orErrno $ c_pwrite fd ptr sz off
 
+pwriteBufExn :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
+pwriteBufExn fd ptr sz off =
+    throwIfErrno $ pwriteBuf fd ptr sz off
+
 pwrite :: Fd -> BS.ByteString -> COff -> EIO CSsize
 pwrite fd bs off =
     let (fptr, foff, len) = BS.toForeignPtr bs in
@@ -75,9 +82,21 @@ pwrite fd bs off =
 pwriteExn :: Fd -> BS.ByteString -> COff -> IO CSsize
 pwriteExn fd bs off = throwIfErrno $ pwrite fd bs off
 
-pwriteBufExn :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
-pwriteBufExn fd ptr sz off =
-    throwIfErrno $ pwriteBuf fd ptr sz off
+pwriteFull :: Fd -> BS.ByteString -> COff -> EIO ()
+pwriteFull fd bs off = do
+    ret <- pwrite fd bs off
+    case ret of
+        Left e -> pure $ Left e
+        Right v
+            | fromIntegral v == BS.length bs ->
+                pure $ Right ()
+            | otherwise ->
+                pwriteFull fd
+                    (BS.drop (fromIntegral v) bs)
+                    (off + fromIntegral v)
+
+pwriteFullExn :: Fd -> BS.ByteString -> COff -> IO ()
+pwriteFullExn fd bs off = throwIfErrno $ pwriteFull fd bs off
 
 readBuf :: Fd -> Ptr Word8 -> CSize -> EIO CSsize
 readBuf fd ptr sz =
@@ -119,3 +138,18 @@ write fd bs =
 writeExn :: Fd -> BS.ByteString -> IO CSsize
 writeExn fd bs =
     throwIfErrno $ write fd bs
+
+-- | Wrapper around write that makes sure the full bytestring is written,
+-- handling short writes from the underlying system call.
+writeFull :: Fd -> BS.ByteString -> EIO ()
+writeFull fd bs = do
+    ret <- write fd bs
+    case ret of
+        Left e -> pure $ Left e
+        Right v
+            | (fromIntegral v) == BS.length bs -> pure $ Right ()
+            | otherwise -> writeFull fd (BS.drop (fromIntegral v) bs)
+
+writeFullExn :: Fd -> BS.ByteString -> IO ()
+writeFullExn fd bs =
+    throwIfErrno $ writeFull fd bs
