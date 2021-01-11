@@ -12,6 +12,14 @@ module Unix
     , read, readExn
     , write, writeExn
     , writeFull, writeFullExn
+
+    , OpenFlag(..)
+    , open, openExn
+    , openat, openatExn
+    , o_APPEND
+    , o_CLOEXEC
+    , o_CREAT
+    , o_DIRECTORY
     ) where
 
 import Foreign.C.Error
@@ -153,3 +161,35 @@ writeFull fd bs = do
 writeFullExn :: Fd -> BS.ByteString -> IO ()
 writeFullExn fd bs =
     throwIfErrno $ writeFull fd bs
+
+newtype OpenFlag = OpenFlag CInt
+instance Semigroup OpenFlag where
+    (OpenFlag x) <> (OpenFlag y) = OpenFlag (x .|. y)
+
+open :: CStr -> OpenFlag -> CMode -> EIO Fd
+open path (OpenFlag flag) mode =
+    orErrno $ c_open path flag mode
+
+openExn :: CStr -> OpenFlag -> CMode -> IO Fd
+openExn path flag mode =
+    throwIfErrno $ open path flag mode
+
+openat :: Fd -> CStr -> OpenFlag -> CMode -> EIO Fd
+openat fd path (OpenFlag flag) mode =
+    orErrno $ c_openat fd path flag mode
+
+openatExn :: Fd -> CStr -> OpenFlag -> CMode -> IO Fd
+openatExn fd path flag mode =
+    throwIfErrno $ openat fd path flag mode
+
+o_APPEND :: OpenFlag
+o_APPEND = OpenFlag c_O_APPEND
+
+o_CLOEXEC :: OpenFlag
+o_CLOEXEC = OpenFlag c_O_CLOEXEC
+
+o_CREAT :: OpenFlag
+o_CREAT = OpenFlag c_O_CREAT
+
+o_DIRECTORY :: OpenFlag
+o_DIRECTORY = OpenFlag c_O_DIRECTORY
