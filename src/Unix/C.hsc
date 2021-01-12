@@ -1,6 +1,7 @@
 module Unix.C
     ( module X
     , CStr(..)
+    , c_close
     , c_fdatasync
     , c_fsync
     , c_ftruncate
@@ -29,6 +30,7 @@ import System.Posix.Types as X
 
 newtype CStr = CStr (Ptr CChar)
 
+foreign import ccall "close" c_close :: Fd -> IO CInt
 foreign import ccall "fdatasync" c_fdatasync :: Fd -> IO CInt
 foreign import ccall "fsync" c_fsync :: Fd -> IO CInt
 foreign import ccall "ftruncate" c_ftruncate :: Fd -> COff -> IO Int

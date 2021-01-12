@@ -20,6 +20,8 @@ module Unix
     , o_CLOEXEC
     , o_CREAT
     , o_DIRECTORY
+
+    , close, closeExn
     ) where
 
 import Foreign.C.Error
@@ -193,3 +195,9 @@ o_CREAT = OpenFlag c_O_CREAT
 
 o_DIRECTORY :: OpenFlag
 o_DIRECTORY = OpenFlag c_O_DIRECTORY
+
+close :: Fd -> EIO ()
+close fd = orErrno $ void $ c_close fd
+
+closeExn :: Fd -> IO ()
+closeExn fd = throwIfErrno $ close fd
