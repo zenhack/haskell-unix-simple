@@ -1,5 +1,5 @@
 module Unix.Errors
-    ( retryEintr
+    ( retryEINTR
     , throwIfErrno
     ) where
 
@@ -15,9 +15,9 @@ throwIfErrno io = do
         Left e  -> throwIO $ errnoToIOError "" e Nothing Nothing
         Right v -> pure v
 
-retryEintr :: IO (Either Errno a) -> IO (Either Errno a)
-retryEintr io = do
+retryEINTR :: IO (Either Errno a) -> IO (Either Errno a)
+retryEINTR io = do
     r <- io
     case r of
-        Left e | e == eINTR -> retryEintr io
+        Left e | e == eINTR -> retryEINTR io
         _                   -> pure r

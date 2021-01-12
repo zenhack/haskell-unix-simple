@@ -48,19 +48,19 @@ import qualified Data.Text.Encoding       as TE
 type EIO a = IO (Either Errno a)
 
 fsync :: Fd -> EIO ()
-fsync fd = orErrno $ void $ c_fsync fd
+fsync fd = retryEINTR $ orErrno $ void $ c_fsync fd
 
 fsyncExn :: Fd -> IO ()
 fsyncExn fd = throwIfErrno $ fsync fd
 
 fdatasync :: Fd -> EIO ()
-fdatasync fd = orErrno $ void $ c_fdatasync fd
+fdatasync fd = retryEINTR $ orErrno $ void $ c_fdatasync fd
 
 fdatasyncExn :: Fd -> IO ()
 fdatasyncExn fd = throwIfErrno $ fdatasync fd
 
 ftruncate :: Fd -> COff -> EIO ()
-ftruncate fd off = orErrno $ void $ c_ftruncate fd off
+ftruncate fd off = retryEINTR $ orErrno $ void $ c_ftruncate fd off
 
 ftruncateExn :: Fd -> COff -> IO ()
 ftruncateExn fd off =
@@ -68,7 +68,7 @@ ftruncateExn fd off =
 
 preadBuf :: Fd -> Ptr Word8 -> CSize -> COff -> EIO CSsize
 preadBuf fd ptr sz off =
-    orErrno $ c_pread fd ptr sz off
+    retryEINTR $ orErrno $ c_pread fd ptr sz off
 
 preadBufExn :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
 preadBufExn fd ptr sz off =
@@ -87,7 +87,7 @@ preadExn fd sz off = throwIfErrno $ pread fd sz off
 
 pwriteBuf :: Fd -> Ptr Word8 -> CSize -> COff -> EIO CSsize
 pwriteBuf fd ptr sz off =
-    orErrno $ c_pwrite fd ptr sz off
+    retryEINTR $ orErrno $ c_pwrite fd ptr sz off
 
 pwriteBufExn :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
 pwriteBufExn fd ptr sz off =
@@ -120,7 +120,7 @@ pwriteFullExn fd bs off = throwIfErrno $ pwriteFull fd bs off
 
 readBuf :: Fd -> Ptr Word8 -> CSize -> EIO CSsize
 readBuf fd ptr sz =
-    orErrno $ c_read fd ptr sz
+    retryEINTR $ orErrno $ c_read fd ptr sz
 
 readBufExn :: Fd -> Ptr Word8 -> CSize -> IO CSsize
 readBufExn fd ptr sz =
@@ -143,7 +143,7 @@ readExn fd sz =
 
 writeBuf :: Fd -> Ptr Word8 -> CSize -> EIO CSsize
 writeBuf fd ptr sz =
-    orErrno $ c_write fd ptr sz
+    retryEINTR $ orErrno $ c_write fd ptr sz
 
 writeBufExn :: Fd -> Ptr Word8 -> CSize -> IO CSsize
 writeBufExn fd ptr sz =
@@ -190,7 +190,7 @@ instance IsString CString where
 open :: CString -> OpenFlag -> CMode -> EIO Fd
 open (CString path) (OpenFlag flag) mode =
     withForeignPtr path $ \path ->
-        orErrno $ c_open (CStr path) flag mode
+        retryEINTR $ orErrno $ c_open (CStr path) flag mode
 
 openExn :: CString -> OpenFlag -> CMode -> IO Fd
 openExn path flag mode =
@@ -199,7 +199,7 @@ openExn path flag mode =
 openat :: Fd -> CString -> OpenFlag -> CMode -> EIO Fd
 openat fd (CString path) (OpenFlag flag) mode =
     withForeignPtr path $ \path ->
-        orErrno $ c_openat fd (CStr path) flag mode
+        retryEINTR $ orErrno $ c_openat fd (CStr path) flag mode
 
 openatExn :: Fd -> CString -> OpenFlag -> CMode -> IO Fd
 openatExn fd path flag mode =
@@ -219,7 +219,12 @@ o_WRONLY    = OpenFlag c_O_WRONLY
 o_RDWR      = OpenFlag c_O_RDWR
 
 close :: Fd -> EIO ()
-close fd = orErrno $ void $ c_close fd
+close fd =
+    orErrno $ void $ c_close fd
+    -- We intentionally do not retryEINTR; posix is silent on whether
+    -- the file descriptor will be closed after an EINTR return, but on
+    -- at least Linux the answer is always yes, so we must not retry
+    -- in case the file descriptor has been re-allocated by another thread.
 
 closeExn :: Fd -> IO ()
 closeExn fd = throwIfErrno $ close fd
