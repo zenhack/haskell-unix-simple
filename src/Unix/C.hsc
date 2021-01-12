@@ -16,6 +16,14 @@ module Unix.C
     , c_O_CLOEXEC
     , c_O_CREAT
     , c_O_DIRECTORY
+    , c_O_EXCL
+    , c_O_NOFOLLOW
+    , c_O_NONBLOCK
+    , c_O_NDELAY
+    , c_O_TRUNC
+    , c_O_RDONLY
+    , c_O_WRONLY
+    , c_O_RDWR
     ) where
 
 #include <sys/types.h>
@@ -52,5 +60,29 @@ c_O_CREAT = #const O_CREAT
 
 c_O_DIRECTORY :: CInt
 c_O_DIRECTORY = #const O_DIRECTORY
+
+c_O_EXCL :: CInt
+c_O_EXCL = #const O_EXCL
+
+c_O_NOFOLLOW :: CInt
+c_O_NOFOLLOW = #const O_NOFOLLOW
+
+c_O_NONBLOCK :: CInt
+c_O_NONBLOCK = #const O_NONBLOCK
+
+c_O_NDELAY :: CInt
+c_O_NDELAY = #const O_NDELAY
+
+c_O_TRUNC :: CInt
+c_O_TRUNC = #const O_TRUNC
+
+c_O_RDONLY :: CInt
+c_O_RDONLY = #const O_RDONLY
+
+c_O_WRONLY :: CInt
+c_O_WRONLY = #const O_WRONLY
+
+c_O_RDWR :: CInt
+c_O_RDWR = #const O_RDWR
 
 -- vim: set ft=haskell :

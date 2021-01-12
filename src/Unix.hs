@@ -20,6 +20,14 @@ module Unix
     , o_CLOEXEC
     , o_CREAT
     , o_DIRECTORY
+    , o_EXCL
+    , o_NOFOLLOW
+    , o_NONBLOCK
+    , o_NDELAY
+    , o_TRUNC
+    , o_RDONLY
+    , o_WRONLY
+    , o_RDWR
 
     , close, closeExn
     ) where
@@ -184,17 +192,18 @@ openatExn :: Fd -> CStr -> OpenFlag -> CMode -> IO Fd
 openatExn fd path flag mode =
     throwIfErrno $ openat fd path flag mode
 
-o_APPEND :: OpenFlag
-o_APPEND = OpenFlag c_O_APPEND
-
-o_CLOEXEC :: OpenFlag
-o_CLOEXEC = OpenFlag c_O_CLOEXEC
-
-o_CREAT :: OpenFlag
-o_CREAT = OpenFlag c_O_CREAT
-
-o_DIRECTORY :: OpenFlag
+o_APPEND    = OpenFlag c_O_APPEND
+o_CLOEXEC   = OpenFlag c_O_CLOEXEC
+o_CREAT     = OpenFlag c_O_CREAT
 o_DIRECTORY = OpenFlag c_O_DIRECTORY
+o_EXCL      = OpenFlag c_O_EXCL
+o_NOFOLLOW  = OpenFlag c_O_NOFOLLOW
+o_NONBLOCK  = OpenFlag c_O_NONBLOCK
+o_NDELAY    = OpenFlag c_O_NDELAY
+o_TRUNC     = OpenFlag c_O_TRUNC
+o_RDONLY    = OpenFlag c_O_RDONLY
+o_WRONLY    = OpenFlag c_O_WRONLY
+o_RDWR      = OpenFlag c_O_RDWR
 
 close :: Fd -> EIO ()
 close fd = orErrno $ void $ c_close fd
