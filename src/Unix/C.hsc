@@ -84,5 +84,3 @@ c_O_WRONLY = #const O_WRONLY
 
 c_O_RDWR :: CInt
 c_O_RDWR = #const O_RDWR
-
--- vim: set ft=haskell :
