@@ -42,6 +42,8 @@ import Zhp
 
 import qualified Data.ByteString          as BS
 import qualified Data.ByteString.Internal as BS
+import qualified Data.Text                as T
+import qualified Data.Text.Encoding       as TE
 
 type EIO a = IO (Either Errno a)
 
@@ -176,19 +178,30 @@ newtype OpenFlag = OpenFlag CInt
 instance Semigroup OpenFlag where
     (OpenFlag x) <> (OpenFlag y) = OpenFlag (x .|. y)
 
-open :: CStr -> OpenFlag -> CMode -> EIO Fd
-open path (OpenFlag flag) mode =
-    orErrno $ c_open path flag mode
+newtype CString = CString (ForeignPtr CChar)
 
-openExn :: CStr -> OpenFlag -> CMode -> IO Fd
+instance IsString CString where
+    fromString str =
+        let bytes = TE.encodeUtf8 $ T.pack (str <> "\0")
+            (fptr, off, len) = BS.toForeignPtr bytes
+        in
+        CString (plusForeignPtr fptr off)
+
+open :: CString -> OpenFlag -> CMode -> EIO Fd
+open (CString path) (OpenFlag flag) mode =
+    withForeignPtr path $ \path ->
+        orErrno $ c_open (CStr path) flag mode
+
+openExn :: CString -> OpenFlag -> CMode -> IO Fd
 openExn path flag mode =
     throwIfErrno $ open path flag mode
 
-openat :: Fd -> CStr -> OpenFlag -> CMode -> EIO Fd
-openat fd path (OpenFlag flag) mode =
-    orErrno $ c_openat fd path flag mode
+openat :: Fd -> CString -> OpenFlag -> CMode -> EIO Fd
+openat fd (CString path) (OpenFlag flag) mode =
+    withForeignPtr path $ \path ->
+        orErrno $ c_openat fd (CStr path) flag mode
 
-openatExn :: Fd -> CStr -> OpenFlag -> CMode -> IO Fd
+openatExn :: Fd -> CString -> OpenFlag -> CMode -> IO Fd
 openatExn fd path flag mode =
     throwIfErrno $ openat fd path flag mode
 
