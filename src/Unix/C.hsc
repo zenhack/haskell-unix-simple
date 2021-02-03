@@ -1,3 +1,4 @@
+{-# LANGUAGE InterruptibleFFI #-}
 module Unix.C
     ( module X
     , CStr(..)
@@ -38,16 +39,16 @@ import System.Posix.Types as X
 
 newtype CStr = CStr (Ptr CChar)
 
-foreign import ccall "close" c_close :: Fd -> IO CInt
-foreign import ccall "fdatasync" c_fdatasync :: Fd -> IO CInt
-foreign import ccall "fsync" c_fsync :: Fd -> IO CInt
-foreign import ccall "ftruncate" c_ftruncate :: Fd -> COff -> IO Int
-foreign import ccall "openat" c_openat :: Fd -> CStr -> CInt -> CMode -> IO Fd
-foreign import ccall "open" c_open :: CStr -> CInt -> CMode -> IO Fd
-foreign import ccall "pread"  c_pread  :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
-foreign import ccall "pwrite" c_pwrite :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
-foreign import ccall "read"  c_read  :: Fd -> Ptr Word8 -> CSize -> IO CSsize
-foreign import ccall "write" c_write :: Fd -> Ptr Word8 -> CSize -> IO CSsize
+foreign import ccall interruptible "close" c_close :: Fd -> IO CInt
+foreign import ccall interruptible "fdatasync" c_fdatasync :: Fd -> IO CInt
+foreign import ccall interruptible "fsync" c_fsync :: Fd -> IO CInt
+foreign import ccall interruptible "ftruncate" c_ftruncate :: Fd -> COff -> IO Int
+foreign import ccall interruptible "openat" c_openat :: Fd -> CStr -> CInt -> CMode -> IO Fd
+foreign import ccall interruptible "open" c_open :: CStr -> CInt -> CMode -> IO Fd
+foreign import ccall interruptible "pread"  c_pread  :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
+foreign import ccall interruptible "pwrite" c_pwrite :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
+foreign import ccall interruptible "read"  c_read  :: Fd -> Ptr Word8 -> CSize -> IO CSsize
+foreign import ccall interruptible "write" c_write :: Fd -> Ptr Word8 -> CSize -> IO CSsize
 
 c_O_APPEND :: CInt
 c_O_APPEND = #const O_APPEND
