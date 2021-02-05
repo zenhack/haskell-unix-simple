@@ -31,6 +31,7 @@ module Unix
 
     , close, closeExn
 
+    -- * Re-exported for convenience
     , CString
     ) where
 
@@ -182,18 +183,18 @@ instance Semigroup OpenFlag where
     (OpenFlag x) <> (OpenFlag y) = OpenFlag (x .|. y)
 
 open :: CString -> OpenFlag -> CMode -> EIO Fd
-open (CString path) (OpenFlag flag) mode =
-    withForeignPtr path $ \path ->
-        retryEINTR $ orErrno $ c_open (CStr path) flag mode
+open path (OpenFlag flag) mode =
+    useCStr path $ \path ->
+        retryEINTR $ orErrno $ c_open path flag mode
 
 openExn :: CString -> OpenFlag -> CMode -> IO Fd
 openExn path flag mode =
     throwIfErrno $ open path flag mode
 
 openat :: Fd -> CString -> OpenFlag -> CMode -> EIO Fd
-openat fd (CString path) (OpenFlag flag) mode =
-    withForeignPtr path $ \path ->
-        retryEINTR $ orErrno $ c_openat fd (CStr path) flag mode
+openat fd path (OpenFlag flag) mode =
+    useCStr path $ \path ->
+        retryEINTR $ orErrno $ c_openat fd path flag mode
 
 openatExn :: Fd -> CString -> OpenFlag -> CMode -> IO Fd
 openatExn fd path flag mode =

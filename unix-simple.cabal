@@ -37,12 +37,12 @@ library
   hs-source-dirs:      src
   exposed-modules:
       Unix
+    , CString
   other-modules:
       Unix.Errors
     , Unix.C
     , Unix.C.Errors
     , Unix.IOVec
-    , CString
 test-suite tests
   import: shared-opts
   type: exitcode-stdio-1.0

@@ -1,7 +1,6 @@
 {-# LANGUAGE InterruptibleFFI #-}
 module Unix.C
     ( module X
-    , CStr(..)
     , c_close
     , c_fdatasync
     , c_fsync
@@ -33,11 +32,10 @@ module Unix.C
 
 import Zhp
 
+import CString (CStr(..))
 import Foreign.C.Types    as X
 import Foreign.Ptr        as X
 import System.Posix.Types as X
-
-newtype CStr = CStr (Ptr CChar)
 
 foreign import ccall interruptible "close" c_close :: Fd -> IO CInt
 foreign import ccall interruptible "fdatasync" c_fdatasync :: Fd -> IO CInt
