@@ -30,6 +30,8 @@ module Unix
     , o_RDWR
 
     , close, closeExn
+
+    , CString
     ) where
 
 import Foreign.C.Error
