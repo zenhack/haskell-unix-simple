@@ -6,14 +6,12 @@ module CString
     , toBuilder
     ) where
 
-import qualified Data.ByteString          as BS
 import qualified Data.ByteString.Builder  as BB
 import qualified Data.ByteString.Internal as BS
 import qualified Data.ByteString.Lazy     as LBS
 import           Foreign.C.Types
 import           Foreign.ForeignPtr
 import           Foreign.Ptr
-import           System.Posix.Types
 import           Zhp
 
 -- | wrapper around a nul-terminated C style string; the pointer points to the
@@ -41,13 +39,13 @@ instance Monoid CString where
 -- | Convert a 'BB.Builder' to a CString. The builder should not have a nul
 -- terminator; it will be added.
 fromBuilder :: BB.Builder -> CString
-fromBuilder bytes = CString
-    { bytes = bytes
+fromBuilder builder = CString
+    { bytes = builder
     , fptr =
-        let bs = LBS.toStrict $ BB.toLazyByteString (bytes <> BB.word8 0)
-            (fptr, off, len) = BS.toForeignPtr bs
+        let bs = LBS.toStrict $ BB.toLazyByteString (builder <> BB.word8 0)
+            (ptr, off, _len) = BS.toForeignPtr bs
         in
-        plusForeignPtr fptr off
+        plusForeignPtr ptr off
     }
 
 -- | Extract a bytestring builder for the string. Does not include the nul

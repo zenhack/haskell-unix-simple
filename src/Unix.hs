@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Unix
     ( fsync, fsyncExn
     , fdatasync, fdatasyncExn
@@ -38,7 +39,6 @@ module Unix
 import CString
 import Foreign.C.Error
 import Foreign.ForeignPtr
-import Foreign.Ptr        (plusPtr)
 import Unix.C
 import Unix.C.Errors
 import Unix.Errors
@@ -46,8 +46,6 @@ import Zhp
 
 import qualified Data.ByteString          as BS
 import qualified Data.ByteString.Internal as BS
-import qualified Data.Text                as T
-import qualified Data.Text.Encoding       as TE
 
 type EIO a = IO (Either Errno a)
 
@@ -183,8 +181,8 @@ instance Semigroup OpenFlag where
     (OpenFlag x) <> (OpenFlag y) = OpenFlag (x .|. y)
 
 open :: CString -> OpenFlag -> CMode -> EIO Fd
-open path (OpenFlag flag) mode =
-    useCStr path $ \path ->
+open fpath (OpenFlag flag) mode =
+    useCStr fpath $ \path ->
         retryEINTR $ orErrno $ c_open path flag mode
 
 openExn :: CString -> OpenFlag -> CMode -> IO Fd
@@ -192,8 +190,8 @@ openExn path flag mode =
     throwIfErrno $ open path flag mode
 
 openat :: Fd -> CString -> OpenFlag -> CMode -> EIO Fd
-openat fd path (OpenFlag flag) mode =
-    useCStr path $ \path ->
+openat fd fpath (OpenFlag flag) mode =
+    useCStr fpath $ \path ->
         retryEINTR $ orErrno $ c_openat fd path flag mode
 
 openatExn :: Fd -> CString -> OpenFlag -> CMode -> IO Fd
