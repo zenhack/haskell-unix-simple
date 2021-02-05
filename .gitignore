@@ -12,6 +12,9 @@ cabal.project.local
 .hspec
 .hspec-failures
 
+# backup files
+*~
+
 # Code coverage:
 .hpc
 *.tix
