@@ -15,3 +15,6 @@ cabal.project.local
 # Code coverage:
 .hpc
 *.tix
+
+# used by tests:
+/test-tmp

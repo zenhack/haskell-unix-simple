@@ -5,11 +5,14 @@ module Unix.C
     , c_fdatasync
     , c_fsync
     , c_ftruncate
+    , c_mkdir
     , c_open
     , c_openat
     , c_pread
     , c_pwrite
     , c_read
+    , c_remove
+    , c_rmdir
     , c_write
 
     , c_O_APPEND
@@ -41,11 +44,14 @@ foreign import ccall interruptible "close" c_close :: Fd -> IO CInt
 foreign import ccall interruptible "fdatasync" c_fdatasync :: Fd -> IO CInt
 foreign import ccall interruptible "fsync" c_fsync :: Fd -> IO CInt
 foreign import ccall interruptible "ftruncate" c_ftruncate :: Fd -> COff -> IO Int
+foreign import ccall interruptible "mkdir" c_mkdir :: CStr -> CMode -> IO CInt
 foreign import ccall interruptible "openat" c_openat :: Fd -> CStr -> CInt -> CMode -> IO Fd
 foreign import ccall interruptible "open" c_open :: CStr -> CInt -> CMode -> IO Fd
 foreign import ccall interruptible "pread"  c_pread  :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
 foreign import ccall interruptible "pwrite" c_pwrite :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
-foreign import ccall interruptible "read"  c_read  :: Fd -> Ptr Word8 -> CSize -> IO CSsize
+foreign import ccall interruptible "read"  c_read :: Fd -> Ptr Word8 -> CSize -> IO CSsize
+foreign import ccall interruptible "remove"  c_remove :: CStr -> IO CInt
+foreign import ccall interruptible "rmdir"  c_rmdir :: CStr -> IO CInt
 foreign import ccall interruptible "write" c_write :: Fd -> Ptr Word8 -> CSize -> IO CSsize
 
 c_O_APPEND :: CInt

@@ -44,6 +44,7 @@ library
     , Unix.IOVec
 test-suite tests
   import: shared-opts
+  build-depends: unix-simple
   type: exitcode-stdio-1.0
   hs-source-dirs: tests
   main-is: Main.hs

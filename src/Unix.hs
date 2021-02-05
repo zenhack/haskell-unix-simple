@@ -3,6 +3,7 @@ module Unix
     ( fsync, fsyncExn
     , fdatasync, fdatasyncExn
     , ftruncate, ftruncateExn
+    , mkdir, mkdirExn
     , preadBuf, preadBufExn
     , pread, preadExn
     , pwriteBuf, pwriteBufExn
@@ -11,6 +12,8 @@ module Unix
     , readBuf, readBufExn
     , writeBuf, writeBufExn
     , read, readExn
+    , remove, removeExn
+    , rmdir, rmdirExn
     , write, writeExn
     , writeFull, writeFullExn
 
@@ -175,6 +178,33 @@ writeFull fd bs = do
 writeFullExn :: Fd -> BS.ByteString -> IO ()
 writeFullExn fd bs =
     throwIfErrno $ writeFull fd bs
+
+remove :: CString -> EIO ()
+remove fpath =
+    useCStr fpath $ \path ->
+        retryEINTR $ orErrno $ () <$ c_remove path
+
+removeExn :: CString -> IO ()
+removeExn fpath =
+    throwIfErrno $ remove fpath
+
+rmdir :: CString -> EIO ()
+rmdir fpath =
+    useCStr fpath $ \path ->
+        retryEINTR $ orErrno $ () <$ c_rmdir path
+
+rmdirExn :: CString -> IO ()
+rmdirExn fpath =
+    throwIfErrno $ rmdir fpath
+
+mkdir :: CString -> CMode -> EIO ()
+mkdir fpath mode =
+    useCStr fpath $ \path ->
+        retryEINTR $ orErrno $ () <$ c_mkdir path mode
+
+mkdirExn :: CString -> CMode -> IO ()
+mkdirExn fpath mode =
+    throwIfErrno $ mkdir fpath mode
 
 newtype OpenFlag = OpenFlag CInt
 instance Semigroup OpenFlag where
