@@ -42,6 +42,7 @@ library
     , Unix.C
     , Unix.C.Errors
     , Unix.IOVec
+    , CString
 test-suite tests
   import: shared-opts
   type: exitcode-stdio-1.0

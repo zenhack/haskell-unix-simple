@@ -34,6 +34,7 @@ module Unix
     , CString
     ) where
 
+import CString
 import Foreign.C.Error
 import Foreign.ForeignPtr
 import Foreign.Ptr        (plusPtr)
@@ -179,15 +180,6 @@ writeFullExn fd bs =
 newtype OpenFlag = OpenFlag CInt
 instance Semigroup OpenFlag where
     (OpenFlag x) <> (OpenFlag y) = OpenFlag (x .|. y)
-
-newtype CString = CString (ForeignPtr CChar)
-
-instance IsString CString where
-    fromString str =
-        let bytes = TE.encodeUtf8 $ T.pack (str <> "\0")
-            (fptr, off, len) = BS.toForeignPtr bytes
-        in
-        CString (plusForeignPtr fptr off)
 
 open :: CString -> OpenFlag -> CMode -> EIO Fd
 open (CString path) (OpenFlag flag) mode =
