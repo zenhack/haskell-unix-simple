@@ -21,12 +21,8 @@ main = do
         contentsA = "File A"
 
     mkdirExn tmpDir 0o700
-    fd <- openExn pathA (o_CREAT <> o_EXCL) 0o600
-
-    size <- writeExn fd contentsA
-    -- FIXME: this is returning -1, but it's not throwing an exception?
-    print size
-
+    fd <- openExn pathA (o_CREAT <> o_EXCL <> o_WRONLY) 0o600
+    writeFullExn fd contentsA
     closeExn fd
     fd <- openExn pathA o_RDONLY 0o700
     contents <- readExn fd (length (contentsA :: String))
