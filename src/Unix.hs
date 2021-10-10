@@ -10,6 +10,11 @@ module Unix
     , pwriteBuf, pwriteBufExn
     , pwrite, pwriteExn
     , pwriteFull, pwriteFullExn
+    , pwritevBuf, pwritevBufExn
+    , pwritevVec, pwritevVecExn
+    , pwritev, pwritevExn
+    , pwritevVecFull, pwritevVecFullExn
+    , pwritevFull, pwritevFullExn
     , readBuf, readBufExn
     , read, readExn
     , remove, removeExn
@@ -133,6 +138,47 @@ pwriteFull fd bs off = do
 pwriteFullExn :: Fd -> BS.ByteString -> COff -> IO ()
 pwriteFullExn fd bs off = throwIfErrno $ pwriteFull fd bs off
 
+pwritevBuf :: Fd -> Ptr CIOVec -> CInt -> COff -> EIO CSsize
+pwritevBuf fd ptr sz off =
+    retryEINTR $ orErrno $ c_pwritev fd ptr sz off
+
+pwritevBufExn :: Fd -> Ptr CIOVec -> CInt -> COff -> IO CSsize
+pwritevBufExn fd ptr sz off =
+    throwIfErrno $ pwritevBuf fd ptr sz off
+
+pwritevVec :: Fd -> SMV.IOVector CIOVec -> COff -> EIO CSsize
+pwritevVec fd vec off =
+    IOVec.useIOVecs vec $ \ptr ->
+        pwritevBuf fd ptr (fromIntegral (SMV.length vec)) off
+
+pwritevVecExn :: Fd -> SMV.IOVector CIOVec -> COff -> IO CSsize
+pwritevVecExn fd vec off =
+    throwIfErrno $ pwritevVec fd vec off
+
+pwritevVecFull :: Fd -> SMV.IOVector CIOVec -> COff -> EIO ()
+pwritevVecFull fd vec off =
+    iovecFull (\vec written -> pwritevVec fd vec (off + fromIntegral written)) vec
+
+pwritevVecFullExn :: Fd -> SMV.IOVector CIOVec -> COff -> IO ()
+pwritevVecFullExn fd vec off =
+    throwIfErrno $ pwritevVecFull fd vec off
+
+pwritev :: Fd -> [BS.ByteString] -> COff -> EIO CSsize
+pwritev fd bss off =
+    IOVec.unsafeWithByteStrings bss (\vec -> pwritevVec fd vec off)
+
+pwritevExn :: Fd -> [BS.ByteString] -> COff -> IO CSsize
+pwritevExn fd bss off =
+    throwIfErrno $ pwritev fd bss off
+
+pwritevFull :: Fd -> [BS.ByteString] -> COff -> EIO ()
+pwritevFull fd bss off =
+    IOVec.unsafeWithByteStrings bss (\vec -> pwritevVecFull fd vec off)
+
+pwritevFullExn :: Fd -> [BS.ByteString] -> COff -> IO ()
+pwritevFullExn fd bss off =
+    throwIfErrno $ pwritevFull fd bss off
+
 readBuf :: Fd -> Ptr Word8 -> CSize -> EIO CSsize
 readBuf fd ptr sz =
     retryEINTR $ orErrno $ c_read fd ptr sz
@@ -216,29 +262,33 @@ writevExn fd bss =
 
 -- | Analouge of writeFull, but for writev. Note: This may modify the
 -- vector in place (but not the individual buffers it points to).
-writevVecFull :: Fd -> SMV.IOVector CIOVec -> EIO CSsize
-writevVecFull fd vec =
-    go fd vec 0
+writevVecFull :: Fd -> SMV.IOVector CIOVec -> EIO ()
+writevVecFull fd = iovecFull (\vec _ -> writevVec fd vec)
+
+-- | Helper for (p?)writevVecFull
+iovecFull :: (SMV.IOVector CIOVec -> CSsize -> EIO CSsize) -> SMV.IOVector CIOVec -> EIO ()
+iovecFull f vec =
+    go vec 0
   where
-    go fd vec !written
-        | SMV.null vec = pure (Right written)
+    go vec !written
+        | SMV.null vec = pure (Right ())
         | otherwise = do
-            res <- writevVec fd vec
+            res <- f vec written
             case res of
                 Left e -> pure $ Left e
                 Right v -> do
                     vec' <- IOVec.dropBytes (fromIntegral v) vec
-                    go fd vec' (written + v)
+                    go vec' (written + v)
 
-writevVecFullExn :: Fd -> SMV.IOVector CIOVec -> IO CSsize
+writevVecFullExn :: Fd -> SMV.IOVector CIOVec -> IO ()
 writevVecFullExn fd vec =
     throwIfErrno $ writevVecFull fd vec
 
-writevFull :: Fd -> [BS.ByteString] -> EIO CSsize
+writevFull :: Fd -> [BS.ByteString] -> EIO ()
 writevFull fd bss =
     IOVec.unsafeWithByteStrings bss (writevVecFull fd)
 
-writevFullExn :: Fd -> [BS.ByteString] -> IO CSsize
+writevFullExn :: Fd -> [BS.ByteString] -> IO ()
 writevFullExn fd bss =
     throwIfErrno $ writevFull fd bss
 
