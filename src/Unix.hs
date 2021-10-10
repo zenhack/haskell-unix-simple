@@ -11,12 +11,17 @@ module Unix
     , pwrite, pwriteExn
     , pwriteFull, pwriteFullExn
     , readBuf, readBufExn
-    , writeBuf, writeBufExn
     , read, readExn
     , remove, removeExn
     , rmdir, rmdirExn
+    , writeBuf, writeBufExn
     , write, writeExn
     , writeFull, writeFullExn
+    , writevBuf, writevBufExn
+    , writevVec, writevVecExn
+    , writevVecFull, writevVecFullExn
+    , writev, writevExn
+    , writevFull, writevFullExn
 
     , OpenFlag(..)
     , open, openExn
