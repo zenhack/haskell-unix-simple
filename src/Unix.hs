@@ -38,6 +38,7 @@ module Unix
 
     -- * Re-exported for convenience
     , CString
+    , CIOVec(..)
     ) where
 
 import           CString
