@@ -27,6 +27,7 @@ common shared-opts
     , OverloadedStrings
   build-depends:
       base >=4.12 && <5
+    , vector ^>=0.12.3
     , bytestring >=0.10.12 && <0.12
     , zenhack-prelude ^>=0.1
   default-language:    Haskell2010

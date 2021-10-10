@@ -40,6 +40,12 @@ how to add a syscall.
 * We also provide variants suffixed with `Buf`, that take a pointer and
   size:
   * `readBuf :: Fd -> Ptr Word8 -> CSize -> EIO CSsize`
+* For functions that take an array of `struct iovec` as an input,
+  we provide several variants, e.g. for `writev` we provide:
+  * `writev :: Fd -> [BS.ByteString] -> EIO CSize
+  * `writevBuf :: Fd -> Ptr CIOVec -> CInt -> EIO CSsize`
+  * `writevVec` :: Fd -> SMV.IOVector CIOVec -> EIO CSize`
+  (How to support readv is still an open design question).
 * We provide a `CString` type for functions which accept strings as
   arguments. This type is an instance of `IsString`, so you can use
   string literals if you enable `OverloadedStrings`, or use the

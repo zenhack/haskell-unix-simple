@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
+{-# LANGUAGE BangPatterns #-}
 module Unix
     ( fsync, fsyncExn
     , fdatasync, fdatasyncExn
@@ -45,10 +46,12 @@ import Foreign.ForeignPtr
 import Unix.C
 import Unix.C.Errors
 import Unix.Errors
+import Unix.IOVec
 import Zhp
 
-import qualified Data.ByteString          as BS
-import qualified Data.ByteString.Internal as BS
+import qualified Data.ByteString              as BS
+import qualified Data.ByteString.Internal     as BS
+import qualified Data.Vector.Storable.Mutable as SMV
 
 type EIO a = IO (Either Errno a)
 
@@ -178,6 +181,59 @@ writeFull fd bs = do
 writeFullExn :: Fd -> BS.ByteString -> IO ()
 writeFullExn fd bs =
     throwIfErrno $ writeFull fd bs
+
+writevBuf :: Fd -> Ptr CIOVec -> CInt -> EIO CSsize
+writevBuf fd ptr sz =
+    retryEINTR $ orErrno $ c_writev fd ptr sz
+
+writevBufExn :: Fd -> Ptr CIOVec -> CInt -> IO CSsize
+writevBufExn fd ptr sz =
+    throwIfErrno $ writevBuf fd ptr sz
+
+writevVec :: Fd -> SMV.IOVector CIOVec -> EIO CSsize
+writevVec fd vec =
+    useIOVecs vec $ \ptr ->
+        writevBuf fd ptr (fromIntegral (SMV.length vec))
+
+writevVecExn :: Fd -> SMV.IOVector CIOVec -> IO CSsize
+writevVecExn fd vec =
+    throwIfErrno $ writevVec fd vec
+
+writev :: Fd -> [BS.ByteString] -> EIO CSsize
+writev fd bss =
+    unsafeWithByteStrings bss (writevVec fd)
+
+writevExn :: Fd -> [BS.ByteString] -> IO CSsize
+writevExn fd bss =
+    throwIfErrno $ writev fd bss
+
+-- | Analouge of writeFull, but for writev. Note: This may modify the
+-- vector in place (but not the individual buffers it points to).
+writevVecFull :: Fd -> SMV.IOVector CIOVec -> EIO CSsize
+writevVecFull fd vec =
+    go fd vec 0
+  where
+    go fd vec !written
+        | SMV.null vec = pure (Right written)
+        | otherwise = do
+            res <- writevVec fd vec
+            case res of
+                Left e -> pure $ Left e
+                Right v -> do
+                    vec' <- dropBytes (fromIntegral v) vec
+                    go fd vec' (written + v)
+
+writevVecFullExn :: Fd -> SMV.IOVector CIOVec -> IO CSsize
+writevVecFullExn fd vec =
+    throwIfErrno $ writevVecFull fd vec
+
+writevFull :: Fd -> [BS.ByteString] -> EIO CSsize
+writevFull fd bss =
+    unsafeWithByteStrings bss (writevVecFull fd)
+
+writevFullExn :: Fd -> [BS.ByteString] -> IO CSsize
+writevFullExn fd bss =
+    throwIfErrno $ writevFull fd bss
 
 remove :: CString -> EIO ()
 remove fpath =

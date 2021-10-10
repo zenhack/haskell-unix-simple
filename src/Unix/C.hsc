@@ -10,10 +10,12 @@ module Unix.C
     , c_openat
     , c_pread
     , c_pwrite
+    , c_pwritev
     , c_read
     , c_remove
     , c_rmdir
     , c_write
+    , c_writev
 
     , c_O_APPEND
     , c_O_CLOEXEC
@@ -39,6 +41,7 @@ import CString (CStr(..))
 import Foreign.C.Types    as X
 import Foreign.Ptr        as X
 import System.Posix.Types as X
+import Unix.IOVec (CIOVec)
 
 foreign import ccall interruptible "close" c_close :: Fd -> IO CInt
 foreign import ccall interruptible "fdatasync" c_fdatasync :: Fd -> IO CInt
@@ -49,10 +52,12 @@ foreign import ccall interruptible "openat" c_openat :: Fd -> CStr -> CInt -> CM
 foreign import ccall interruptible "open" c_open :: CStr -> CInt -> CMode -> IO Fd
 foreign import ccall interruptible "pread"  c_pread  :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
 foreign import ccall interruptible "pwrite" c_pwrite :: Fd -> Ptr Word8 -> CSize -> COff -> IO CSsize
+foreign import ccall interruptible "pwritev" c_pwritev :: Fd -> Ptr CIOVec -> CInt -> COff -> IO CSsize
 foreign import ccall interruptible "read"  c_read :: Fd -> Ptr Word8 -> CSize -> IO CSsize
 foreign import ccall interruptible "remove"  c_remove :: CStr -> IO CInt
 foreign import ccall interruptible "rmdir"  c_rmdir :: CStr -> IO CInt
 foreign import ccall interruptible "write" c_write :: Fd -> Ptr Word8 -> CSize -> IO CSsize
+foreign import ccall interruptible "writev" c_writev :: Fd -> Ptr CIOVec -> CInt -> IO CSsize
 
 c_O_APPEND :: CInt
 c_O_APPEND = #const O_APPEND
