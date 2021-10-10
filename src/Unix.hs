@@ -40,14 +40,15 @@ module Unix
     , CString
     ) where
 
-import CString
-import Foreign.C.Error
-import Foreign.ForeignPtr
-import Unix.C
-import Unix.C.Errors
-import Unix.Errors
-import Unix.IOVec
-import Zhp
+import           CString
+import           Foreign.C.Error
+import           Foreign.ForeignPtr
+import           Unix.C
+import           Unix.C.Errors
+import           Unix.Errors
+import           Unix.IOVec         (CIOVec)
+import qualified Unix.IOVec         as IOVec
+import           Zhp
 
 import qualified Data.ByteString              as BS
 import qualified Data.ByteString.Internal     as BS
@@ -192,7 +193,7 @@ writevBufExn fd ptr sz =
 
 writevVec :: Fd -> SMV.IOVector CIOVec -> EIO CSsize
 writevVec fd vec =
-    useIOVecs vec $ \ptr ->
+    IOVec.useIOVecs vec $ \ptr ->
         writevBuf fd ptr (fromIntegral (SMV.length vec))
 
 writevVecExn :: Fd -> SMV.IOVector CIOVec -> IO CSsize
@@ -201,7 +202,7 @@ writevVecExn fd vec =
 
 writev :: Fd -> [BS.ByteString] -> EIO CSsize
 writev fd bss =
-    unsafeWithByteStrings bss (writevVec fd)
+    IOVec.unsafeWithByteStrings bss (writevVec fd)
 
 writevExn :: Fd -> [BS.ByteString] -> IO CSsize
 writevExn fd bss =
@@ -220,7 +221,7 @@ writevVecFull fd vec =
             case res of
                 Left e -> pure $ Left e
                 Right v -> do
-                    vec' <- dropBytes (fromIntegral v) vec
+                    vec' <- IOVec.dropBytes (fromIntegral v) vec
                     go fd vec' (written + v)
 
 writevVecFullExn :: Fd -> SMV.IOVector CIOVec -> IO CSsize
@@ -229,7 +230,7 @@ writevVecFullExn fd vec =
 
 writevFull :: Fd -> [BS.ByteString] -> EIO CSsize
 writevFull fd bss =
-    unsafeWithByteStrings bss (writevVecFull fd)
+    IOVec.unsafeWithByteStrings bss (writevVecFull fd)
 
 writevFullExn :: Fd -> [BS.ByteString] -> IO CSsize
 writevFullExn fd bss =
